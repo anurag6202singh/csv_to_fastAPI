@@ -5,7 +5,8 @@
 # def home():
 #     return {"message": "Hello FastApI"}
 
-from fastapi import FastAPI
+
+from fastapi import FastAPI,HTTPException
 import pandas as pd
 
 app = FastAPI()
@@ -35,3 +36,31 @@ def get_csv_data():
         return {
             "error": str(e)
         }
+    
+@app.get("/get-student/{student_id}")
+def get_student_by_studentid(student_id: str):
+
+    try:
+        df = pd.read_csv("students_complete.csv")
+
+        student = df[df["student_id"] == student_id]
+
+        if student.empty:
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
+
+        return student.fillna("").to_dict(orient="records")[0]
+
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="CSV file not found"
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
